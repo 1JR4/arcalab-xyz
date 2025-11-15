@@ -6,8 +6,11 @@ import { ThemeProvider } from '@/components/theme-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Flying Nimbus - Build, Publish & Monetize Productivity Tools',
+  title: 'ARCALAB - Build, Publish & Monetize Productivity Tools',
   description: 'Multi-tenant SaaS platform where users can build, publish, and monetize productivity tools using Code, AI, or No-Code methods.',
+  icons: {
+    icon: '/arca.png',
+  },
 }
 
 export default function RootLayout({

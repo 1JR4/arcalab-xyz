@@ -63,9 +63,25 @@
     min-height: 100vh;
     width: 100vw;
     background: black;
+    /* Commented out old background for clean black bg
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #fef9c3 100%);
+    background-image: url('/website_light.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    */
   }
   .dark body {
     background: black;
+    /* Commented out old background for clean black bg
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #374151 100%);
+    background-image: url('/website_dark.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    */
   }
 }
 
@@ -73,45 +89,67 @@
 @layer utilities {
   /* Glass Intensity Classes */
   .glass-light {
+    @apply bg-white/20 dark:bg-gray-900/20;
+    @apply backdrop-blur-[8px];
+    @apply border border-white/20 dark:border-gray-700/20;
   }
 
   .glass-medium {
+    @apply bg-white/30 dark:bg-gray-900/30;
+    @apply backdrop-blur-[12px];
+    @apply border border-white/30 dark:border-gray-700/30;
   }
 
   .glass-heavy {
+    @apply bg-white/40 dark:bg-gray-900/40;
+    @apply backdrop-blur-[16px];
+    @apply border border-white/40 dark:border-gray-700/40;
   }
 
   .glass-ultra {
+    @apply bg-white/50 dark:bg-gray-900/50;
+    @apply backdrop-blur-[24px];
+    @apply border border-white/50 dark:border-gray-700/50;
   }
 
   /* Glass Divider */
   .glass-divider {
+    @apply bg-gradient-to-b from-transparent via-white/20 to-transparent;
+    @apply dark:via-gray-700/20;
   }
 
   /* Portal Transitions */
   .transition-portal {
+    @apply transition-all duration-300 ease-in-out;
   }
 
   .transition-portal-fast {
+    @apply transition-all duration-150 ease-in-out;
   }
 
   /* Glow Effects */
   .glow-primary {
+    @apply shadow-lg shadow-primary/20;
   }
 
   .glow-blue {
+    @apply shadow-lg shadow-blue-500/20;
   }
 
   .glow-purple {
+    @apply shadow-lg shadow-purple-500/20;
   }
 
   .glow-green {
+    @apply shadow-lg shadow-emerald-500/20;
   }
 
   .glow-amber {
+    @apply shadow-lg shadow-amber-500/20;
   }
 
   .glow-cyan {
+    @apply shadow-lg shadow-cyan-500/20;
   }
 
   /* Scrollbar Utilities */

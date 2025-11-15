@@ -114,8 +114,8 @@ export default function Experiment6Page() {
 
   return (
     <>
-      {/* Black background */}
-      <div className="fixed inset-0 bg-black" style={{ zIndex: -10 }} />
+      {/* Background with images */}
+      <div className="bg-layer" />
 
       {/* Navigation - stays on top */}
       <nav className="navigation">
