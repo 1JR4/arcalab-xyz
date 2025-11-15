@@ -1,12 +1,9 @@
 name = "arcalab-xyz"
 compatibility_date = "2025-11-15"
 
-# For Next.js with App Router (not static export)
-# Cloudflare Pages will handle the build automatically via GitHub integration
+# Output directory for Next.js static export
+# Next.js outputs static files to 'out' directory when using output: 'export'
+pages_build_output_dir = "out"
 
-# This file is mainly for local development and configuration
+# Node.js compatibility (not needed for static export, but keeping for future)
 compatibility_flags = ["nodejs_compat"]
-
-# Pages configuration
-# Build output will be handled by Cloudflare's Next.js integration
-pages_build_output_dir = ".next"
