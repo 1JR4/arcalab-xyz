@@ -25,7 +25,7 @@ export type AnimationType = "particles" | "waves" | "matrix" | "stars" | "geomet
 /**
  * Color theme for glass effects
  */
-export type ColorTheme = "default" | "blue" | "purple" | "green" | "amber" | "cyan";
+export type ColorTheme = "default" | "blue" | "purple" | "green" | "amber" | "cyan" | "trading";
 
 /**
  * Glass effect configuration
@@ -134,6 +134,22 @@ export function getThemeColors(theme: ColorTheme = "default") {
         glow: "shadow-cyan-500/20",
         bg: "bg-cyan-500/10",
         hover: "hover:bg-cyan-500/20"
+      };
+    case "trading":
+      return {
+        primary: "from-[#00E6CA] to-[#00D084]", // Teal to green gradient
+        accent: "trading-accent",                 // Uses utility class
+        border: "border-trading-accent/40",       // Teal border
+        glow: "shadow-[#00E6CA]/20",             // Teal glow
+        bg: "bg-trading-accent/10",              // Subtle teal background
+        hover: "hover:bg-trading-accent/20",     // Hover teal
+        // Trading-specific colors
+        buy: "trading-buy",                       // Green
+        sell: "trading-sell",                     // Red
+        buyBg: "bg-trading-buy",
+        sellBg: "bg-trading-sell",
+        buyBorder: "border-trading-buy",
+        sellBorder: "border-trading-sell"
       };
     default:
       return {
@@ -250,6 +266,76 @@ export const GLASS_PRESETS = {
   button: { intensity: "light" as GlassIntensity, variant: "button" as GlassVariant, hover: true },
   modal: { intensity: "ultra" as GlassIntensity, variant: "overlay" as GlassVariant, hover: false }
 } as const;
+
+/**
+ * Trading-specific button variants (Kraken-inspired)
+ * Large, prominent CTAs with clear buy/sell distinction
+ */
+export function getTradingButtonClasses(
+  variant: "buy" | "sell" | "primary" | "secondary" = "primary",
+  size: "sm" | "md" | "lg" = "md"
+): string {
+  // Size classes
+  const sizeClasses = {
+    sm: "h-10 px-4 text-sm font-semibold",
+    md: "h-12 px-6 text-base font-semibold",
+    lg: "h-14 px-8 text-lg font-bold"
+  };
+
+  const baseClasses = cn(
+    "rounded-lg", // Less rounded than standard buttons
+    "transition-all duration-300",
+    "focus:outline-none focus:ring-2 focus:ring-offset-2",
+    "disabled:opacity-50 disabled:cursor-not-allowed",
+    sizeClasses[size]
+  );
+
+  switch (variant) {
+    case "buy":
+      return cn(
+        baseClasses,
+        "bg-trading-buy text-white",
+        "hover:brightness-110",
+        "focus:ring-[#00D084]",
+        "shadow-lg shadow-[#00D084]/25"
+      );
+    case "sell":
+      return cn(
+        baseClasses,
+        "bg-trading-sell text-white",
+        "hover:brightness-110",
+        "focus:ring-[#F85149]",
+        "shadow-lg shadow-[#F85149]/25"
+      );
+    case "primary":
+      return cn(
+        baseClasses,
+        "bg-trading-accent text-white",
+        "hover:brightness-110",
+        "focus:ring-[#00E6CA]",
+        "shadow-lg shadow-[#00E6CA]/25"
+      );
+    case "secondary":
+      return cn(
+        baseClasses,
+        "bg-transparent border-2 border-trading-accent",
+        "trading-accent",
+        "hover:bg-trading-accent/10",
+        "focus:ring-[#00E6CA]"
+      );
+  }
+}
+
+/**
+ * Trading card classes - flat design with subtle shadows
+ */
+export function getTradingCardClasses(hover: boolean = true): string {
+  return cn(
+    "trading-card",
+    "p-6",
+    hover ? "cursor-pointer" : ""
+  );
+}
 
 /**
  * Portal spacing system

@@ -281,7 +281,7 @@ export default function GiantCardV2({
       className={cx(
         expanded ? glass.cardExpanded : glass.card,
         "w-full text-white/95 transition-all duration-[1000ms] ease-in-out",
-        expanded ? "h-full overflow-hidden" : "",
+        expanded ? "h-full overflow-hidden flex flex-col" : "",
         expanded ? "px-6 md:px-10 py-4 md:py-5" : "px-6 md:px-10 py-6 md:py-8"
       )}
     >

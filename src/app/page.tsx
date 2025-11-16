@@ -4,7 +4,14 @@ import React, { useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Moon, Sun, Type, X, ChevronLeft, ChevronRight, Calendar, Mail, ArrowLeft } from 'lucide-react'
-import { useTheme } from '@/components/theme-provider'
+import { useTheme } from 'next-themes'
+
+// Wrapper to match old theme provider API
+function useThemeWithToggle() {
+  const { theme, setTheme } = useTheme()
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
+  return { theme, toggleTheme, setTheme }
+}
 import GiantCardV2 from '@/components/experiment/giant-card-v2'
 import CalendarScheduler from '@/components/calendar-scheduler'
 
@@ -75,8 +82,8 @@ const SLIDES = [
   }
 ]
 
-export default function Experiment6Page() {
-  const { theme, toggleTheme } = useTheme()
+export default function HomePage() {
+  const { theme, toggleTheme } = useThemeWithToggle()
   const [showFontPanel, setShowFontPanel] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [contactOption, setContactOption] = useState<'calendar' | 'form' | null>(null)
@@ -85,6 +92,10 @@ export default function Experiment6Page() {
   const [heroFont, setHeroFont] = useState('EB Garamond, serif')
   const [cardExpandedStates, setCardExpandedStates] = useState<Record<number, boolean>>({})
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [mgcDescText, setMgcDescText] = useState('Click to explore interactive features')
+  const [mgcDescPlacement, setMgcDescPlacement] = useState<'above-mgc' | 'on-mgc' | 'next-to-brand' | 'below-brand' | 'none'>('on-mgc')
+  const [mgcHeadline, setMgcHeadline] = useState('Explore Our Projects')
+  const [showMgcHeadline, setShowMgcHeadline] = useState(false)
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % SLIDES.length)
@@ -114,22 +125,30 @@ export default function Experiment6Page() {
 
   return (
     <>
-      {/* Background with images */}
-      <div className="bg-layer" />
+      {/* Black background */}
+      <div className="fixed inset-0 bg-black" style={{ zIndex: -10 }} />
 
       {/* Navigation - stays on top */}
       <nav className="navigation">
         <div className="nav-content">
           {/* Logo and Brand */}
-          <div className="flex items-center gap-3">
-            <Image
-              src="/arca.png"
-              alt="Arca Labs Logo"
-              width={48}
-              height={48}
-              className="w-12 h-12"
-            />
-            <span className="text-xl font-bold text-white" style={{ fontFamily: brandFont }}>ARCALAB</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/arca.png"
+                alt="Arca Labs Logo"
+                width={48}
+                height={48}
+                className="w-12 h-12"
+              />
+              <span className="text-xl font-bold text-white" style={{ fontFamily: brandFont }}>ARCALAB</span>
+              {mgcDescPlacement === 'next-to-brand' && (
+                <span className="text-xs text-white/70 ml-2 italic">{mgcDescText}</span>
+              )}
+            </div>
+            {mgcDescPlacement === 'below-brand' && (
+              <span className="text-xs text-white/70 italic ml-16">{mgcDescText}</span>
+            )}
           </div>
 
           {/* Navigation Links & Theme Switcher */}
@@ -150,7 +169,7 @@ export default function Experiment6Page() {
             {/* Theme Switcher */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg glass-card hover:bg-white/10 dark:hover:bg-gray-800/10 transition-all"
+              className="p-2 rounded-lg glass-card hover:bg-white/10 dark:hover:bg-gray-800/10 transition-all text-white"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? (
@@ -196,9 +215,33 @@ export default function Experiment6Page() {
         ))}
       </div>
 
+      {/* Headline above MGC - positioned below nav, left-aligned */}
+      {showMgcHeadline && (
+        <div className="fixed left-16 z-20" style={{ top: '120px' }}>
+          <h2 className="text-4xl md:text-5xl font-bold text-white" style={{ fontFamily: heroFont }}>
+            {mgcHeadline}
+          </h2>
+        </div>
+      )}
+
       {/* Mega Giant Card (MGC) Container - Solid Card */}
       <div className="fixed left-16 right-16 top-24 bottom-4 z-10">
-        <div className="h-full rounded-3xl overflow-hidden">
+
+        {mgcDescPlacement === 'above-mgc' && (
+          <div className="absolute -top-8 left-0 right-0 text-center z-20">
+            <span className="text-sm text-white/80 italic px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 inline-block">
+              {mgcDescText}
+            </span>
+          </div>
+        )}
+        <div className="h-full rounded-3xl overflow-hidden relative">
+          {mgcDescPlacement === 'on-mgc' && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+              <span className="text-sm text-white/90 italic px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/30 inline-block shadow-lg">
+                {mgcDescText}
+              </span>
+            </div>
+          )}
           {/* Slider Container */}
           <div
             className="flex h-full transition-transform duration-700 ease-in-out"
@@ -241,7 +284,7 @@ export default function Experiment6Page() {
                         </>
                       )}
                       {slide.id !== 2 && (
-                        <div className="absolute inset-0 bg-[url('/images/website_dark.png')] bg-cover bg-center opacity-20" />
+                        <div className="absolute inset-0 bg-[url('/website_dark.png')] bg-cover bg-center opacity-20" />
                       )}
                     </>
                   ) : (
@@ -313,7 +356,7 @@ export default function Experiment6Page() {
                   className="absolute left-8 right-8 md:left-12 md:right-12 z-30"
                   style={{
                     bottom: cardExpandedStates[slide.id] ? 0 : '2rem',
-                    top: cardExpandedStates[slide.id] ? '6rem' : 'calc(100vh - 450px)',
+                    top: cardExpandedStates[slide.id] ? '4rem' : 'calc(100vh - 450px)',
                     transition: 'bottom 1000ms ease-in-out, top 1000ms ease-in-out'
                   }}
                 >
@@ -357,7 +400,7 @@ export default function Experiment6Page() {
 
       {/* Font Preview Panel */}
       {showFontPanel && (
-        <div className="fixed top-24 right-20 z-50 w-80 glass-card p-6 rounded-2xl shadow-2xl">
+        <div className="fixed top-24 right-20 z-50 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto glass-card p-6 rounded-2xl shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold flex items-center gap-2">
@@ -395,7 +438,7 @@ export default function Experiment6Page() {
           </div>
 
           {/* Hero Font Selector */}
-          <div>
+          <div className="mb-4">
             <label className="block text-sm font-semibold mb-2">Hero Headlines Font</label>
             <select
               value={heroFont}
@@ -415,6 +458,80 @@ export default function Experiment6Page() {
               <p className="text-2xl font-bold text-yellow-500" style={{ fontFamily: heroFont }}>
                 Build fast, and go far.
               </p>
+            </div>
+          </div>
+
+          {/* MGC Headline Settings */}
+          <div className="border-t border-white/10 dark:border-gray-700/10 pt-4">
+            <h4 className="text-sm font-semibold mb-3">Card Headline Settings</h4>
+
+            {/* Show/Hide Toggle */}
+            <div className="mb-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showMgcHeadline}
+                  onChange={(e) => setShowMgcHeadline(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/20 bg-white/10 focus:ring-yellow-500"
+                />
+                <span className="text-xs font-medium">Show Headline Above Card</span>
+              </label>
+            </div>
+
+            {/* Headline Text */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium mb-1">Headline Text</label>
+              <input
+                type="text"
+                value={mgcHeadline}
+                onChange={(e) => setMgcHeadline(e.target.value)}
+                disabled={!showMgcHeadline}
+                className="w-full p-2 text-sm rounded-lg bg-white/10 dark:bg-gray-900/30 border border-white/20 dark:border-gray-700/20 focus:border-yellow-500 focus:outline-none transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="Enter headline..."
+              />
+              <div className="mt-2 p-2 rounded-lg bg-white/5 dark:bg-gray-900/20 text-xs text-white/70">
+                Uses the Hero Headlines font style
+              </div>
+            </div>
+          </div>
+
+          {/* MGC Description Settings */}
+          <div className="border-t border-white/10 dark:border-gray-700/10 pt-4">
+            <h4 className="text-sm font-semibold mb-3">Card Description Settings</h4>
+
+            {/* Description Text */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium mb-1">Description Text</label>
+              <input
+                type="text"
+                value={mgcDescText}
+                onChange={(e) => setMgcDescText(e.target.value)}
+                className="w-full p-2 text-sm rounded-lg bg-white/10 dark:bg-gray-900/30 border border-white/20 dark:border-gray-700/20 focus:border-yellow-500 focus:outline-none transition-colors text-white"
+                placeholder="Enter description..."
+              />
+            </div>
+
+            {/* Placement Selector */}
+            <div>
+              <label className="block text-xs font-medium mb-1">Placement</label>
+              <select
+                value={mgcDescPlacement}
+                onChange={(e) => setMgcDescPlacement(e.target.value as any)}
+                className="w-full p-2 text-sm rounded-lg bg-white/10 dark:bg-gray-900/30 border border-white/20 dark:border-gray-700/20 focus:border-yellow-500 focus:outline-none transition-colors text-white"
+              >
+                <option value="none">Hidden</option>
+                <option value="on-mgc">On Card (floating badge)</option>
+                <option value="above-mgc">Above Card</option>
+                <option value="next-to-brand">Next to Brand</option>
+                <option value="below-brand">Below Brand</option>
+              </select>
+              <div className="mt-2 p-2 rounded-lg bg-white/5 dark:bg-gray-900/20 text-xs text-white/70">
+                {mgcDescPlacement === 'none' && 'Description is hidden'}
+                {mgcDescPlacement === 'on-mgc' && 'Floating badge on top of the card'}
+                {mgcDescPlacement === 'above-mgc' && 'Badge positioned above the card'}
+                {mgcDescPlacement === 'next-to-brand' && 'Inline next to ARCALAB brand'}
+                {mgcDescPlacement === 'below-brand' && 'Below the brand name in nav'}
+              </div>
             </div>
           </div>
         </div>
