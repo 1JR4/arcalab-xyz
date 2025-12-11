@@ -256,12 +256,6 @@ export default function HomePage() {
 
                         {/* Content Overlay */}
                         <div className="absolute inset-0 p-8 md:p-20 flex flex-col justify-center max-w-5xl z-20">
-                          {slide.logo && (
-                            <div className="mb-8">
-                              <Image src={slide.logo} alt="Logo" width={80} height={80} className="w-20 h-20 drop-shadow-xl" />
-                            </div>
-                          )}
-
                           <h2 className="text-5xl md:text-8xl font-bold text-white mb-4 tracking-tight drop-shadow-lg leading-[1.1]" style={{ fontFamily: slide.id === 2 ? 'Space Grotesk, sans-serif' : heroFont }}>
                             {slide.heroTitle1}
                           </h2>
