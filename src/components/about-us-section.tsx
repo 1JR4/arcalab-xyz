@@ -20,7 +20,7 @@ export default function AboutUsSection({ className, heroFont }: AboutUsSectionPr
                             alt="ARCALAB Team"
                             width={1920}
                             height={1080}
-                            className="w-full h-auto object-contain"
+                            className="w-full h-full object-cover"
                             priority
                             sizes="(max-width: 768px) 100vw, 70vw"
                         />
@@ -64,6 +64,9 @@ export default function AboutUsSection({ className, heroFont }: AboutUsSectionPr
                             </span>
                             <span className="px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-mono text-blue-300 tracking-widest uppercase backdrop-blur-sm">
                                 Lead Builder
+                            </span>
+                            <span className="px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-mono text-purple-300 tracking-widest uppercase backdrop-blur-sm">
+                                Lead Creative
                             </span>
                         </div>
                     </div>
