@@ -29,29 +29,32 @@ const SLIDES = [
     heroSubtitle: "AI-Powered Workstation for everyone",
     bgImages: ["/website_light.png"],
     useGradient: false,
-    logo: "/fn_logo.svg"
+    logo: "/fn_logo.svg",
+    externalLink: "https://www.flyingnimbus.io/"
   },
   {
     id: 2,
     projectName: "BitnBolt",
     tagline: "Build and manage websites through conversation.",
     heroTitle1: "Build and Manage Websites",
-    heroTitle2: "by just thinking about it",
+    heroTitle2: "just by talking to it",
     heroSubtitle: "Conversational website builder and manager",
-    bgImages: ["/bitnbolt.png"],
+    bgImages: ["/bb.png"],
     useGradient: false,
-    logo: "/bitnbolt.svg"
+    logo: "/bitnbolt.svg",
+    externalLink: "https://bitnbolt.com/"
   },
   {
     id: 5,
     projectName: "Arcadion",
-    tagline: "No-PM OS: The end of manual project management.",
-    heroTitle1: "No-PM OS",
-    heroTitle2: "AgentOps Map",
+    tagline: "No-PM OS",
+    heroTitle1: "Say bye to project",
+    heroTitle2: "and program managers.",
     heroSubtitle: "Turns your architecture into a living map. AI agents coordinate status, risks, and dependencies.",
-    bgColor: "from-orange-900/50 to-amber-900/50",
-    useGradient: true,
-    comingSoon: true
+    bgImages: ["/arcadion.png"],
+    useGradient: false,
+    comingSoon: true,
+    logo: "/arca.png"
   },
   {
     id: 3,
@@ -183,7 +186,7 @@ export default function HomePage() {
           <HeroSection
             heroFont={heroFont}
             headline="We Build What's Next."
-            subheadline="Pioneering the future of digital experiences with AI, design, and intuition."
+            subheadline="Innovating with AI and design."
           />
         </motion.div>
 
@@ -200,18 +203,18 @@ export default function HomePage() {
 
             <div className="relative group">
               {/* Navigation Buttons */}
-              <div className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-4 z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-full group-hover:translate-x-0">
+              <div className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-4 z-50 opacity-100 transition-all duration-300">
                 <button
                   onClick={prevSlide}
-                  className="p-4 rounded-full glass-card hover:bg-white/20 text-white/70 hover:text-white transition-all shadow-xl"
+                  className="p-4 rounded-full bg-black/40 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white hover:text-white transition-all shadow-xl hover:scale-110"
                 >
                   <ChevronLeft className="w-8 h-8" />
                 </button>
               </div>
-              <div className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-4 z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-full group-hover:translate-x-0">
+              <div className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-4 z-50 opacity-100 transition-all duration-300">
                 <button
                   onClick={nextSlide}
-                  className="p-4 rounded-full glass-card hover:bg-white/20 text-white/70 hover:text-white transition-all shadow-xl"
+                  className="p-4 rounded-full bg-black/40 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white hover:text-white transition-all shadow-xl hover:scale-110"
                 >
                   <ChevronRight className="w-8 h-8" />
                 </button>
@@ -284,13 +287,27 @@ export default function HomePage() {
                               </div>
                             ) : (
                               <Link
-                                href={slide.id === 1 ? "/portal" : `/${slide.projectName.toLowerCase()}`}
+                                href={slide.externalLink || (slide.id === 1 ? "/portal" : `/${slide.projectName.toLowerCase()}`)}
                                 className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-white text-black font-bold text-lg hover:bg-yellow-400 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(250,204,21,0.4)] hover:-translate-y-1"
                               >
                                 Explore {slide.projectName} <ArrowLeft className="rotate-180 w-5 h-5" />
                               </Link>
                             )}
                           </div>
+                        </div>
+
+                        {/* Logo and Branding - Lower Right */}
+                        <div className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
+                          <div className="relative w-10 h-10 overflow-hidden rounded-lg">
+                            <Image
+                              src="/arcalab.png"
+                              alt="ARCALAB"
+                              width={40}
+                              height={40}
+                              className="object-cover"
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-white tracking-wide" style={{ fontFamily: brandFont }}>ARCALAB</span>
                         </div>
                       </div>
                     ))}
@@ -329,7 +346,7 @@ export default function HomePage() {
           <section className="relative">
             <div className="flex flex-col items-center text-center space-y-4 mb-16">
               <h2 className="text-3xl md:text-5xl font-bold text-white relative z-10" style={{ fontFamily: heroFont }}>
-                Insights
+                Blogs
               </h2>
               <div className="w-24 h-1 bg-yellow-500 rounded-full" />
             </div>
@@ -448,7 +465,7 @@ export default function HomePage() {
                 {SLIDES.map((product) => (
                   <Link
                     key={product.id}
-                    href={product.id === 1 ? "/portal" : `/${product.projectName.toLowerCase()}`}
+                    href={product.externalLink || (product.id === 1 ? "/portal" : `/${product.projectName.toLowerCase()}`)}
                     onClick={() => setShowProductsModal(false)}
                     className="group relative h-[400px] rounded-[2rem] overflow-hidden border border-white/10 hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_0_40px_-10px_rgba(234,179,8,0.2)] bg-[#1a1a1a]"
                   >

@@ -18,7 +18,7 @@ const BLOG_POSTS = [
         date: "2025-01-15",
         readTime: "8 min read",
         category: "AI & Innovation",
-        thumbnail: "/website_dark.png" // Using existing asset temporarily or a better placeholder
+        thumbnail: "/1.png"
     },
     {
         id: 2,
@@ -27,7 +27,7 @@ const BLOG_POSTS = [
         date: "2025-01-10",
         readTime: "10 min read",
         category: "Enterprise Strategy",
-        thumbnail: "/website_light.png" // Using existing asset
+        thumbnail: "/2.png"
     },
     {
         id: 3,
@@ -36,7 +36,7 @@ const BLOG_POSTS = [
         date: "2025-01-05",
         readTime: "7 min read",
         category: "Consumer Trends",
-        thumbnail: "/background.png" // Using existing asset
+        thumbnail: "/3.png"
     }
 ];
 
