@@ -83,6 +83,7 @@ const SLIDES = [
 
 export default function HomePage() {
   const { theme, toggleTheme } = useThemeWithToggle()
+  const [mounted, setMounted] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [contactOption, setContactOption] = useState<'calendar' | 'form' | null>(null)
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' })
@@ -94,6 +95,10 @@ export default function HomePage() {
   const [mgcHeadline] = useState('Our Products')
   const [showMgcHeadline] = useState(true)
   const [showProductsModal, setShowProductsModal] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Auto-advance slides every 8 seconds if not interacting? (Optional, disabled for now to keep it calm)
 
@@ -128,16 +133,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-[48px] h-[48px] overflow-hidden rounded-xl bg-white/5 border border-white/10 group-hover:border-yellow-500/50 transition-colors">
-              <Image
-                src="/arcalab.png"
-                alt="ARCALAB"
-                width={48}
-                height={48}
-                className="object-cover"
-              />
-            </div>
-            <span className="text-xl font-bold text-white tracking-wide" style={{ fontFamily: brandFont }}>ARCALAB</span>
+            <Image
+              src="/arcalab.png"
+              alt="ARCALAB"
+              width={48}
+              height={48}
+              className="object-cover group-hover:opacity-80 transition-opacity"
+            />
+            <span className="text-xl font-bold text-white tracking-wide group-hover:text-yellow-400 transition-colors" style={{ fontFamily: brandFont }}>ARCALAB</span>
           </Link>
 
           {/* Nav Links */}
@@ -167,7 +170,7 @@ export default function HomePage() {
               className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-yellow-400 transition-all"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {mounted ? (theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />) : <div className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -298,17 +301,15 @@ export default function HomePage() {
 
                         {/* Logo and Branding - Lower Right */}
                         {slide.logo && (
-                          <div className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
-                            <div className="relative w-10 h-10 overflow-hidden rounded-lg">
-                              <Image
-                                src={slide.logo}
-                                alt={slide.projectName}
-                                width={40}
-                                height={40}
-                                className="object-contain"
-                              />
-                            </div>
-                            <span className="text-sm font-bold text-white tracking-wide" style={{ fontFamily: brandFont }}>{slide.projectName}</span>
+                          <div className="absolute bottom-8 right-8 z-30 flex items-center gap-4">
+                            <Image
+                              src={slide.logo}
+                              alt={slide.projectName}
+                              width={64}
+                              height={64}
+                              className="object-contain drop-shadow-lg"
+                            />
+                            <span className="text-2xl md:text-3xl font-bold text-white tracking-wide drop-shadow-lg" style={{ fontFamily: brandFont }}>{slide.projectName}</span>
                           </div>
                         )}
                       </div>
