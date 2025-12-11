@@ -185,8 +185,8 @@ export default function HomePage() {
         >
           <HeroSection
             heroFont={heroFont}
-            headline="We Build What's Next."
-            subheadline="Innovating with AI and design."
+            headline="Let's build the next thing."
+            subheadline="Innovating with AI and creativity."
           />
         </motion.div>
 
