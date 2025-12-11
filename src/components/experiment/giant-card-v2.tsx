@@ -1,1111 +1,339 @@
-"use client";
+'use client';
 
-import React, { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AppWindow as WorkstationIcon,
-  ShoppingBag as MarketplaceIcon,
-  BookOpen as ResourcesIcon,
-  BookOpen,
-  CreditCard as PlansIcon,
-  CheckCircle2,
-  BadgeCheck,
-  ArrowRight,
-  Star,
-  Plus,
-  Play,
-  Pin,
-  Hash,
-  DollarSign,
-  Filter,
-  X,
-} from "lucide-react";
+    X, Globe, Plus, ArrowRight, Search, CheckCircle2,
+    Terminal, ShoppingBag, Coins, Database, LayoutTemplate, Box,
+    Bot, BarChart, Palette, Zap, FileCode, Book, Video, Mic,
+    Image as ImageIcon, Calendar, MessageSquare, Users, Shield, Globe as GlobeIcon,
+    ChevronLeft, ChevronRight, Sparkles
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-/**
- * Flying Nimbus – Giant Card V2
- *
- * • Single interactive surface that replaces most top‑nav hopping.
- * • Liquid‑glass aesthetic, keyboard navigation, in‑card trays.
- * • Topics: Marketplace, Workstation, Plans, Resources.
- * • Everything updates in‑place; no page navigation required.
- *
- * Usage:
- *  <GiantCardV2 />
- *
- * Tailwind required. Framer Motion + lucide‑react used for polish.
- */
-
-// ---------------------------
-// Config (swap with real data)
-// ---------------------------
-const CONFIG = {
-  product: {
-    name: "Flying Nimbus",
-    beta: true,
-    tagline: "Access all your tools and projects in one place.",
-    ctaPrimarySignedOut: "Start free",
-    ctaPrimarySignedIn: "Open workstation",
-    ctaSecondary: "Browse marketplace",
-  },
-  topics: ["Workstation", "Marketplace", "Plans", "Resources"] as const,
-  marketplace: {
-    filters: [
-      "Automation",
-      "Writing",
-      "Research",
-      "Data",
-      "Design",
-      "Dev Tools",
-    ],
-    trending: [
-      {
-        id: "scraper",
-        name: "Smart Scraper",
-        outcome: "Turn any page into data",
-        price: "Free",
-        rating: 4.8,
-      },
-      {
-        id: "summarizer",
-        name: "Quick Summarizer",
-        outcome: "Digest long docs in seconds",
-        price: "Free",
-        rating: 4.7,
-      },
-      {
-        id: "sheetmate",
-        name: "SheetMate",
-        outcome: "Pipe AI into spreadsheets",
-        price: "Premium",
-        rating: 4.6,
-      },
-    ],
-    gallery: Array.from({ length: 6 }).map((_, i) => ({
-      id: `tool-${i + 1}`,
-      name: [
-        "AutoTagger",
-        "Prompt Shelf",
-        "CSV Cleaner",
-        "Brand Writer",
-        "Image Prompt Buddy",
-        "Repo Reader",
-      ][i],
-      outcome: [
-        "Label data fast",
-        "Save and reuse prompts",
-        "Fix messy CSVs",
-        "On‑brand copy",
-        "Better prompts for art",
-        "Understand any repo",
-      ][i],
-      price: ["Free", "Free", "Premium", "Premium", "Pro", "Free"][i],
-      rating: 4.3 + Math.random() * 0.5,
-    })),
-  },
-  plans: {
-    faqs: [
-      {
-        q: "How do payouts work?",
-        a: "We issue monthly payouts to Pro builders with revenue over the threshold.",
-      },
-      {
-        q: "Can I cancel anytime?",
-        a: "Yes. Downgrades take effect at the next billing date.",
-      },
-      {
-        q: "Do you offer team pricing?",
-        a: "Contact us for volume licensing and SSO.",
-      },
-    ],
-  },
-  resources: [
-    {
-      key: "about",
-      title: "About",
-      body: "We build tools that help anyone create, share, and monetize AI‑powered apps.",
-    },
-    {
-      key: "blog",
-      title: "Blog",
-      body: "Product notes, customer stories, and hands‑on guides.",
-    },
-    {
-      key: "careers",
-      title: "Careers",
-      body: "Join a small team shipping big things. Roles in product, design, and infra.",
-    },
-    {
-      key: "contact",
-      title: "Contact",
-      body: "Reach us at hello@flyingnimbus.app. We usually reply within one business day.",
-    },
-    {
-      key: "docs",
-      title: "Docs",
-      body: "SDKs, publishing guide, and examples. Start with the Quickstart.",
-    },
-    {
-      key: "changelog",
-      title: "Changelog",
-      body: "Weekly improvements to marketplace, workstation, and billing.",
-    },
-  ],
-};
-
-type Topic = (typeof CONFIG.topics)[number];
-
-// Utility: tiny classnames combiner
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
+interface GiantCardV2Props {
+    className?: string;
+    onExpandChange?: (expanded: boolean) => void;
+    projectName?: string;
+    tagline?: string;
 }
 
-function useHashTopic(): [Topic, (t: Topic) => void] {
-  const parse = (): Topic => {
-    const h = typeof window !== "undefined" ? window.location.hash : "";
-    const m = /giantcard=([a-z]+)/i.exec(h || "");
-    const key = m?.[1]?.toLowerCase();
-    const map: Record<string, Topic> = {
-      workstation: "Workstation",
-      marketplace: "Marketplace",
-      plans: "Plans",
-      resources: "Resources",
+// Feature data for Flying Nimbus Builder side
+const builderFeatures = [
+    { id: 'monetization', icon: Coins, name: 'Monetization', description: 'Build revenue streams directly into your tools', details: 'Create subscription tiers, one-time purchases, or usage-based pricing. Automatic payment processing through Stripe with instant payouts.', benefits: ['Stripe integration', 'Multiple pricing models', 'Instant payouts', 'Revenue analytics'] },
+    { id: 'ai-integration', icon: Sparkles, name: 'AI Integration', description: 'Add powerful AI capabilities to your applications', details: 'Access state-of-the-art AI models including GPT-4, Claude, and custom models. Built-in rate limiting and cost management.', benefits: ['Multiple AI providers', 'Context management', 'Streaming responses', 'Cost optimization'] },
+    { id: 'managed-backend', icon: Database, name: 'Managed Backend', description: 'Zero-config database and API infrastructure', details: 'Fully managed PostgreSQL database with automatic backups, scaling, and security. RESTful APIs generated automatically.', benefits: ['Auto-scaling database', 'Automatic backups', 'Built-in auth', 'Global CDN'] },
+    { id: 'no-code-studio', icon: LayoutTemplate, name: 'No-Code Studio', description: 'Visual builder for non-developers', details: 'Drag-and-drop interface builder with pre-built components. No coding required - build production-ready apps visually.', benefits: ['Drag & drop builder', 'Pre-built components', 'Real-time preview', 'Export to code'] },
+    { id: 'sdk-apis', icon: Box, name: 'SDK & APIs', description: 'Developer-friendly SDKs and REST APIs', details: 'Comprehensive SDKs for JavaScript, Python, Go, and more. Well-documented REST APIs with webhooks and real-time events.', benefits: ['Multi-language SDKs', 'REST & GraphQL', 'Webhook support', 'Real-time updates'] }
+];
+
+// Feature data for Flying Nimbus Marketplace side (15 categories)
+const marketplaceFeatures = [
+    { id: 'ai-assistants', icon: Bot, name: 'AI Assistants', description: 'Intelligent assistants for every workflow', details: 'Discover AI-powered assistants for coding, writing, research, and more. Customizable to your specific needs.' },
+    { id: 'data-analytics', icon: BarChart, name: 'Data Analytics', description: 'Powerful analytics and visualization tools', details: 'Turn your data into insights with advanced analytics, beautiful dashboards, and automated reporting.' },
+    { id: 'creative-suite', icon: Palette, name: 'Creative Suite', description: 'Design and content creation tools', details: 'Professional-grade tools for graphic design, video editing, and content creation. AI-assisted workflows.' },
+    { id: 'productivity', icon: Zap, name: 'Productivity', description: 'Tools to supercharge your workflow', details: 'Task management, automation, note-taking, and collaboration tools. Integrate with your existing workflow.' },
+    { id: 'seo-marketing', icon: Search, name: 'SEO & Marketing', description: 'Grow your audience and optimize reach', details: 'SEO optimization, content marketing, social media management, and analytics. AI-powered insights.' },
+    { id: 'developer-tools', icon: FileCode, name: 'Developer Tools', description: 'Essential tools for software development', details: 'IDEs, linters, debuggers, and other utilities to streamline your development process.' },
+    { id: 'documentation', icon: Book, name: 'Documentation', description: 'Knowledge bases and documentation tools', details: 'Create, host, and manage documentation for your projects and products.' },
+    { id: 'video-tools', icon: Video, name: 'Video Tools', description: 'Video editing and processing', details: 'Edit, compress, and transcode videos directly in your browser.' },
+    { id: 'audio-tools', icon: Mic, name: 'Audio Tools', description: 'Audio recording and editing', details: 'Record, edit, and enhance audio files. AI-powered noise reduction and transcription.' },
+    { id: 'photo-editors', icon: ImageIcon, name: 'Photo Editors', description: 'Image editing and manipulation', details: 'Edit photos, remove backgrounds, and apply filters with ease.' },
+    { id: 'scheduling', icon: Calendar, name: 'Scheduling', description: 'Calendar and scheduling tools', details: 'Manage your time, schedule meetings, and organize your calendar.' },
+    { id: 'communication', icon: MessageSquare, name: 'Communication', description: 'Chat and messaging tools', details: 'Stay connected with your team and customers through secure messaging.' },
+    { id: 'collaboration', icon: Users, name: 'Collaboration', description: 'Team collaboration software', details: 'Work together in real-time on documents, whiteboards, and projects.' },
+    { id: 'security-tools', icon: Shield, name: 'Security Tools', description: 'Cybersecurity and privacy tools', details: 'Protect your data and privacy with encryption, VPNs, and security scanners.' },
+    { id: 'web-tools', icon: GlobeIcon, name: 'Web Tools', description: 'Utilities for the web', details: 'DNS lookups, ping tests, speed tests, and other web utilities.' }
+];
+
+const ITEMS_PER_PAGE = 6;
+
+export default function GiantCardV2({ className, onExpandChange, projectName, tagline }: GiantCardV2Props) {
+    // Flying Nimbus state
+    const [expandedBuilderFeature, setExpandedBuilderFeature] = useState<string | null>(null);
+    const [expandedMarketplaceFeature, setExpandedMarketplaceFeature] = useState<string | null>(null);
+    const [marketplacePage, setMarketplacePage] = useState(0);
+
+    const totalMarketplacePages = Math.ceil(marketplaceFeatures.length / ITEMS_PER_PAGE);
+    const currentMarketplaceFeatures = marketplaceFeatures.slice(
+        marketplacePage * ITEMS_PER_PAGE,
+        (marketplacePage + 1) * ITEMS_PER_PAGE
+    );
+
+    const nextPage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (marketplacePage < totalMarketplacePages - 1) {
+            setMarketplacePage(prev => prev + 1);
+        }
     };
-    return map[key || ""] || "Marketplace"; // default
-  };
-  const [topic, setTopicState] = useState<Topic>(parse());
-  const setTopic = (t: Topic) => {
-    setTopicState(t);
-    if (typeof window !== "undefined") {
-      const slug = t.toLowerCase();
-      window.location.hash = `#giantcard=${slug}`;
-    }
-  };
-  useEffect(() => {
-    const onHash = () => setTopicState(parse());
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-  return [topic, setTopic];
-}
 
-// Glass primitives
-const glass = {
-  card: "relative rounded-3xl border border-white/20 bg-white/15 dark:bg-white/12 backdrop-blur-[0.5px] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
-  cardExpanded: "relative rounded-3xl border border-white/25 bg-white/20 dark:bg-white/18 backdrop-blur-[24px] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
-  inner:
-    "rounded-2xl border border-white/10 bg-white/6 dark:bg-white/5 backdrop-blur-[1px]",
-  innerExpanded:
-    "rounded-2xl border border-white/15 bg-white/10 dark:bg-white/8 backdrop-blur-[12px]",
-  stroke: "ring-1 ring-white/10",
-};
-
-// ---------------------------
-// Main component
-// ---------------------------
-export default function GiantCardV2({
-  onExpandChange,
-  projectName,
-  tagline,
-}: {
-  onExpandChange?: (expanded: boolean) => void;
-  projectName?: string;
-  tagline?: string;
-}) {
-  const [topic, setTopic] = useHashTopic();
-  const [signedIn] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-
-  // Auto-expand if hash exists in URL
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.location.hash.includes("giantcard=")
-    ) {
-      setExpanded(true);
-      onExpandChange?.(true);
-    }
-  }, []);
-
-  // Notify parent when expanded state changes
-  useEffect(() => {
-    onExpandChange?.(expanded);
-  }, [expanded, onExpandChange]);
-
-  // Handle topic selection
-  const handleTopicSelect = (t: Topic) => {
-    setTopic(t);
-    setExpanded(true);
-  };
-
-  // Handle collapse
-  const handleCollapse = () => {
-    setExpanded(false);
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  };
-
-  // keyboard navigation across topics
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!expanded) return;
-
-      const order: Topic[] = [
-        "Marketplace",
-        "Workstation",
-        "Plans",
-        "Resources",
-      ];
-      const idx = order.indexOf(topic);
-      if (e.key === "ArrowRight") setTopic(order[(idx + 1) % order.length]);
-      if (e.key === "ArrowLeft")
-        setTopic(order[(idx - 1 + order.length) % order.length]);
-      if (e.key.toLowerCase() === "w") setTopic("Workstation");
-      if (e.key.toLowerCase() === "m") setTopic("Marketplace");
-      if (e.key.toLowerCase() === "p") setTopic("Plans");
-      if (e.key.toLowerCase() === "r") setTopic("Resources");
-      if (e.key === "Escape") handleCollapse();
+    const prevPage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (marketplacePage > 0) {
+            setMarketplacePage(prev => prev - 1);
+        }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [topic, setTopic, expanded]);
 
-  const PrimaryCTA = signedIn
-    ? CONFIG.product.ctaPrimarySignedIn
-    : CONFIG.product.ctaPrimarySignedOut;
+    // Render Flying Nimbus dual-path card
+    if (projectName === "Flying Nimbus") {
+        return (
+            <div className={cn("w-full", className)}>
+                <div className="relative bg-black/30 backdrop-blur-sm border-2 border-white/20 rounded-3xl shadow-2xl overflow-hidden h-[380px]">
+                    {/* MAIN SELECTION SCREEN */}
+                    <div className="h-full flex flex-col md:flex-row items-stretch">
+                        {/* LEFT SIDE (Builder) */}
+                        <div className="flex-1 group relative p-6 text-left border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
+                            {/* Hover Gradient Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-  return (
-    <section
-      aria-label="Giant Card"
-      className={cx(
-        expanded ? glass.cardExpanded : glass.card,
-        "w-full text-white/95 transition-all duration-[1000ms] ease-in-out",
-        expanded ? "h-full overflow-hidden flex flex-col" : "",
-        expanded ? "px-6 md:px-10 py-4 md:py-5" : "px-6 md:px-10 py-6 md:py-8"
-      )}
-    >
-      {/* Header row: product info + topic buttons */}
-      <div className={cx(
-        "grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] items-stretch",
-        expanded ? "gap-4" : "gap-6"
-      )}>
-        <header className={cx(
-          "flex flex-col justify-between",
-          expanded ? "min-h-0" : "min-h-[220px]"
-        )}>
-          <div>
-            <div className={cx(
-              "flex items-center gap-3",
-              expanded ? "gap-2" : "gap-4"
-            )}>
-              {(projectName === "Flying Nimbus" || projectName === CONFIG.product.name || projectName === "BitnBolt") && (
-                <Image
-                  src={projectName === "BitnBolt" ? "/bitnbolt.svg" : "/fn_logo.svg"}
-                  alt={`${projectName} Logo`}
-                  width={projectName === "BitnBolt" ? (expanded ? 48 : 64) : (expanded ? 32 : 48)}
-                  height={projectName === "BitnBolt" ? (expanded ? 48 : 64) : (expanded ? 32 : 48)}
-                  className={cx(
-                    "flex-shrink-0",
-                    projectName === "BitnBolt"
-                      ? (expanded ? "w-12 h-12" : "w-16 h-16")
-                      : (expanded ? "w-8 h-8" : "w-12 h-12")
-                  )}
-                />
-              )}
-              <h2 className={cx(
-                "font-extrabold tracking-tight",
-                expanded ? "text-2xl md:text-3xl" : "text-4xl md:text-5xl"
-              )}>
-                {projectName || CONFIG.product.name}{" "}
-                <span className="align-super text-base font-semibold text-yellow-300">
-                  {CONFIG.product.beta && projectName === CONFIG.product.name ? "Beta" : null}
-                </span>
-              </h2>
+                            <div className="relative z-10 h-full flex flex-col space-y-4">
+                                {/* Header Section */}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                        <Terminal className="w-6 h-6 text-blue-400" />
+                                    </div>
+                                    <h2 className="text-2xl md:text-3xl font-bold text-white">
+                                        I want to Build Tools
+                                    </h2>
+                                </div>
+
+                                <p className="text-sm text-white/70">
+                                    Access the Workstation & IDE to create, test, and deploy your applications.
+                                </p>
+
+                                {/* Content Area - Switches between Grid and Details */}
+                                <div className="flex-1 relative mt-2">
+                                    <AnimatePresence mode="wait">
+                                        {expandedBuilderFeature ? (
+                                            <motion.div
+                                                key="details"
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: 20 }}
+                                                className="absolute inset-0 flex flex-col"
+                                            >
+                                                {(() => {
+                                                    const feature = builderFeatures.find(f => f.id === expandedBuilderFeature);
+                                                    if (!feature) return null;
+                                                    return (
+                                                        <div className="flex flex-col h-full">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setExpandedBuilderFeature(null);
+                                                                }}
+                                                                className="flex items-center gap-2 text-white/60 hover:text-white mb-4 text-sm"
+                                                            >
+                                                                <ArrowRight className="w-4 h-4 rotate-180" /> Back to features
+                                                            </button>
+                                                            <div className="flex items-center gap-3 mb-4">
+                                                                <div className="p-3 bg-blue-500/20 rounded-lg">
+                                                                    <feature.icon className="w-8 h-8 text-blue-400" />
+                                                                </div>
+                                                                <h3 className="text-2xl font-bold text-white">{feature.name}</h3>
+                                                            </div>
+                                                            <p className="text-white/80 text-base mb-6 leading-relaxed">{feature.details}</p>
+
+                                                            {feature.benefits && (
+                                                                <div className="grid grid-cols-2 gap-2 mb-6">
+                                                                    {feature.benefits.map((benefit, idx) => (
+                                                                        <div key={idx} className="flex items-center gap-2 text-sm text-white/70">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                                                            {benefit}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            <div className="mt-auto">
+                                                                <button
+                                                                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
+                                                                >
+                                                                    Start with {feature.name}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="grid"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="flex flex-wrap gap-4 opacity-80 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                {builderFeatures.map((feature) => (
+                                                    <button
+                                                        key={feature.id}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setExpandedBuilderFeature(feature.id);
+                                                        }}
+                                                        className="flex flex-col items-center justify-center gap-3 w-36 h-36 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-white/80 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/40 transition-all duration-200 cursor-pointer"
+                                                        title={feature.name}
+                                                    >
+                                                        <feature.icon className="w-8 h-8 text-blue-400" />
+                                                        <span className="text-sm font-medium text-center leading-tight px-2">{feature.name}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT SIDE (Marketplace) */}
+                        <div className="flex-1 group relative p-6 text-left overflow-hidden">
+                            {/* Hover Gradient Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-bl from-cyan-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                            <div className="relative z-10 h-full flex flex-col space-y-4">
+                                {/* Header Section */}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                        <ShoppingBag className="w-6 h-6 text-cyan-400" />
+                                    </div>
+                                    <h2 className="text-2xl md:text-3xl font-bold text-white">
+                                        I want to Find Tools
+                                    </h2>
+                                </div>
+
+                                <p className="text-sm text-white/70">
+                                    Explore the Marketplace to discover, review, and use community-built tools.
+                                </p>
+
+                                {/* Content Area - Switches between Grid and Details */}
+                                <div className="flex-1 relative mt-2">
+                                    <AnimatePresence mode="wait">
+                                        {expandedMarketplaceFeature ? (
+                                            <motion.div
+                                                key="details"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="absolute inset-0 flex flex-col"
+                                            >
+                                                {(() => {
+                                                    const feature = marketplaceFeatures.find(f => f.id === expandedMarketplaceFeature);
+                                                    if (!feature) return null;
+                                                    return (
+                                                        <div className="flex flex-col h-full">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setExpandedMarketplaceFeature(null);
+                                                                }}
+                                                                className="flex items-center gap-2 text-white/60 hover:text-white mb-4 text-sm"
+                                                            >
+                                                                <ArrowRight className="w-4 h-4 rotate-180" /> Back to categories
+                                                            </button>
+                                                            <div className="flex items-center gap-3 mb-4">
+                                                                <div className="p-3 bg-cyan-500/20 rounded-lg">
+                                                                    <feature.icon className="w-8 h-8 text-cyan-400" />
+                                                                </div>
+                                                                <h3 className="text-2xl font-bold text-white">{feature.name}</h3>
+                                                            </div>
+                                                            <p className="text-white/80 text-base mb-6 leading-relaxed">{feature.details}</p>
+
+                                                            <div className="mt-auto">
+                                                                <button
+                                                                    className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-xl transition-colors"
+                                                                >
+                                                                    Browse {feature.name}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="grid"
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: 20 }}
+                                                className="h-full flex flex-col"
+                                            >
+                                                <div className="flex flex-wrap gap-4 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                    {currentMarketplaceFeatures.map((feature) => (
+                                                        <button
+                                                            key={feature.id}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setExpandedMarketplaceFeature(feature.id);
+                                                            }}
+                                                            className="flex flex-col items-center justify-center gap-3 w-36 h-36 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-white/80 hover:text-white hover:bg-cyan-500/20 hover:border-cyan-500/40 transition-all duration-200 cursor-pointer"
+                                                            title={feature.name}
+                                                        >
+                                                            <feature.icon className="w-8 h-8 text-cyan-400" />
+                                                            <span className="text-sm font-medium text-center leading-tight px-2">{feature.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {/* Pagination Controls */}
+                                                <div className="mt-auto flex items-center justify-between px-2 pt-2">
+                                                    <button
+                                                        onClick={prevPage}
+                                                        disabled={marketplacePage === 0}
+                                                        className={`p-2 rounded-full transition-colors ${marketplacePage === 0 ? 'text-white/20 cursor-not-allowed' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+                                                    >
+                                                        <ChevronLeft className="w-5 h-5" />
+                                                    </button>
+                                                    <span className="text-xs text-white/40">
+                                                        Page {marketplacePage + 1} of {totalMarketplacePages}
+                                                    </span>
+                                                    <button
+                                                        onClick={nextPage}
+                                                        disabled={marketplacePage === totalMarketplacePages - 1}
+                                                        className={`p-2 rounded-full transition-colors ${marketplacePage === totalMarketplacePages - 1 ? 'text-white/20 cursor-not-allowed' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+                                                    >
+                                                        <ChevronRight className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p className={cx(
-              "text-white/80 max-w-xl",
-              expanded ? "mt-1 text-sm md:text-base" : "mt-4 text-lg md:text-xl"
-            )}>
-              {tagline || CONFIG.product.tagline}
-            </p>
-          </div>
-
-          {/* Buttons - show different ones based on expanded state */}
-          <AnimatePresence mode="wait">
-            {!expanded ? (
-              <motion.div
-                key="collapsed-button"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex items-center gap-3 mt-6"
-              >
-                <button
-                  onClick={() => handleTopicSelect("Marketplace")}
-                  className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors group"
-                >
-                  <span className="font-semibold">Learn More</span>
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="expanded-buttons"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex items-center gap-3 mt-3"
-              >
-                <button className="inline-flex items-center gap-2 rounded-xl bg-white/90 text-slate-900 font-semibold hover:bg-white focus:outline-none focus:ring-2 focus:ring-white/60 px-3 py-1.5 text-sm">
-                  {PrimaryCTA}
-                  <ArrowRight size={16} />
-                </button>
-                <button
-                  onClick={() => handleTopicSelect("Marketplace")}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 font-medium hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50 px-3 py-1.5 text-sm"
-                >
-                  {CONFIG.product.ctaSecondary}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </header>
-
-        {/* Topic grid (right) */}
-        <TopicGrid
-          topic={expanded ? topic : null}
-          onSelect={handleTopicSelect}
-          expanded={expanded}
-        />
-      </div>
-
-      {/* Content canvas */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="mt-3 flex-1 flex flex-col min-h-0"
-          >
-            <div className="relative flex-1 flex flex-col min-h-0">
-              <button
-                onClick={handleCollapse}
-                className="absolute -top-2 right-0 z-10 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs hover:bg-white/15"
-              >
-                <X size={14} /> Collapse
-              </button>
-
-              <div className="flex-1 overflow-y-auto min-h-0">
-                <AnimatePresence mode="wait">
-                  {topic === "Marketplace" && (
-                    <TopicPane key="marketplace" expanded={expanded}>
-                      <MarketplacePane />
-                    </TopicPane>
-                  )}
-                  {topic === "Workstation" && (
-                    <TopicPane key="workstation" expanded={expanded}>
-                      <WorkstationPane />
-                    </TopicPane>
-                  )}
-                  {topic === "Plans" && (
-                    <TopicPane key="plans" expanded={expanded}>
-                      <PlansPane />
-                    </TopicPane>
-                  )}
-                  {topic === "Resources" && (
-                    <TopicPane key="resources" expanded={expanded}>
-                      <ResourcesPane />
-                    </TopicPane>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Utility row */}
-      {expanded && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-xs text-white/60"
-        >
-          <div className="flex items-center gap-2">
-            <kbd className="rounded border border-white/20 bg-white/10 px-1 py-0.5 text-[10px]">
-              ←
-            </kbd>
-            <kbd className="rounded border border-white/20 bg-white/10 px-1 py-0.5 text-[10px]">
-              →
-            </kbd>
-            <span className="text-[11px]">switch</span>
-            <span className="text-white/40">•</span>
-            <kbd className="rounded border border-white/20 bg-white/10 px-1 py-0.5 text-[10px]">
-              ESC
-            </kbd>
-            <span className="text-[11px]">collapse</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Hash size={12} />
-            <span className="truncate text-[11px]">
-              #giantcard={topic.toLowerCase()}
-            </span>
-          </div>
-        </motion.div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------
-// Topic Grid (four big buttons)
-// ---------------------------
-function TopicGrid({
-  topic,
-  onSelect,
-  expanded,
-}: {
-  topic: Topic | null;
-  onSelect: (t: Topic) => void;
-  expanded: boolean;
-}) {
-  const buttons: Array<{
-    key: Topic;
-    label: Topic;
-    icon: React.ReactNode;
-  }> = [
-    {
-      key: "Workstation",
-      label: "Workstation",
-      icon: <WorkstationIcon size={expanded ? 18 : 22} />,
-    },
-    {
-      key: "Marketplace",
-      label: "Marketplace",
-      icon: <MarketplaceIcon size={expanded ? 18 : 22} />,
-    },
-    { key: "Plans", label: "Plans", icon: <PlansIcon size={expanded ? 18 : 22} /> },
-    {
-      key: "Resources",
-      label: "Resources",
-      icon: <ResourcesIcon size={expanded ? 18 : 22} />,
-    },
-  ];
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {buttons.map((b) => (
-        <button
-          key={b.key}
-          onClick={() => onSelect(b.key)}
-          role="tab"
-          aria-selected={topic === b.key}
-          className={cx(
-            glass.inner,
-            "rounded-2xl text-white/90 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/60 transition-all",
-            expanded ? "min-h-0 py-2 px-3" : "aspect-square py-4 px-4",
-            topic === b.key && expanded ? "ring-2 ring-white/50 bg-white/10" : ""
-          )}
-        >
-          <div className={cx(
-            "flex h-full w-full items-center gap-2",
-            expanded ? "flex-row justify-start" : "flex-col justify-center"
-          )}>
-            <div className={cx(
-              "rounded-xl border border-white/20 bg-white/10 flex items-center justify-center",
-              expanded ? "p-2" : "p-3"
-            )}>
-              {b.icon}
-            </div>
-            <span className={cx(
-              "font-semibold text-center",
-              expanded ? "text-sm" : "text-base"
-            )}>{b.label}</span>
-          </div>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------
-// Pane wrapper with motion
-// ---------------------------
-function TopicPane({ children, expanded }: { children: React.ReactNode; expanded: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
-      className={cx(expanded ? glass.innerExpanded : glass.inner, "p-4 md:p-6 rounded-2xl h-full flex flex-col min-h-0")}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-// ---------------------------
-// Marketplace Pane (description-first)
-// ---------------------------
-function MarketplacePane() {
-  const buildingMethods = [
-    {
-      title: "No-Code Builder",
-      description: "Visual drag & drop—no coding needed",
-      audience: "Non-coders",
-      time: "Minutes to publish"
-    },
-    {
-      title: "Vibe Coding",
-      description: "Describe what you want, AI writes the code",
-      audience: "Idea people",
-      time: "Under an hour"
-    },
-    {
-      title: "SDK / Code",
-      description: "Full control with our developer SDK",
-      audience: "Developers",
-      time: "Your timeline"
+        );
     }
-  ];
 
-  const topBuilders = [
-    { name: "Sarah K.", tools: 3, earnings: "$2.4k/mo", badge: "Top Creator" },
-    { name: "Marcus T.", tools: 1, earnings: "$890/mo", badge: "Rising Star" },
-    { name: "Dev Team", tools: 7, earnings: "$5.1k/mo", badge: "Power Builder" },
-  ];
+    // Render simple informational card for other projects (BitnBolt, Imagen, etc.)
+    return (
+        <div className={cn("w-full", className)}>
+            <div className="relative bg-black/60 backdrop-blur-2xl border-2 border-white/30 rounded-3xl shadow-2xl overflow-hidden h-[380px]">
+                {/* Add a subtle gradient overlay for better visibility */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-  return (
-    <div className="flex-1 flex flex-col h-full min-h-0">
-      <div className="space-y-3 flex-shrink-0">
-        <h3 className="text-2xl md:text-3xl font-bold">
-          Build once, earn forever
-        </h3>
-        <p className="text-base md:text-lg text-white/80 max-w-3xl">
-          Create useful tools and start monetizing immediately. Our community rewards builders who solve real problems—whether you code or not.
-        </p>
-      </div>
-
-      {/* Three ways to build */}
-      <div className="space-y-3 mt-4 flex-shrink-0">
-          <h4 className="text-base font-semibold flex items-center gap-2">
-            <Plus size={16} className="text-white/60" />
-            Three ways to build
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {buildingMethods.map((method, i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-white/10 bg-white/6 p-4 hover:bg-white/10 transition-all cursor-pointer"
-              >
-                <h5 className="text-base font-semibold mb-2">{method.title}</h5>
-                <p className="text-sm text-white/70 mb-3">{method.description}</p>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60">{method.audience}</span>
-                  <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs">
-                    {method.time}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      {/* Community & rewards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 flex-1">
-        {/* Top builders */}
-        <div className="rounded-xl border border-white/10 bg-white/6 p-4 flex flex-col">
-          <h4 className="text-base font-semibold mb-3 flex items-center gap-2">
-            <Star size={16} className="text-yellow-300" />
-            Top builders this month
-          </h4>
-          <div className="space-y-2 flex-1">
-              {topBuilders.map((builder, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-orange-400 flex items-center justify-center text-xs font-bold text-slate-900">
-                      {i + 1}
+                <div className="relative h-full flex items-center justify-center p-8 md:p-12">
+                    <div className="text-center space-y-6">
+                        <h2 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+                            {projectName}
+                        </h2>
+                        {tagline && (
+                            <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
+                                {tagline}
+                            </p>
+                        )}
+                        <div className="flex items-center justify-center gap-4 pt-4">
+                            <button className="px-8 py-4 rounded-xl bg-white text-black font-bold hover:bg-white/90 transition-all shadow-lg text-lg">
+                                Learn More
+                            </button>
+                            <button className="px-8 py-4 rounded-xl border-2 border-white/40 bg-white/15 text-white font-bold hover:bg-white/25 transition-all text-lg backdrop-blur-sm">
+                                Get Started
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-medium">{builder.name}</div>
-                      <div className="text-xs text-white/60">{builder.tools} tools · {builder.earnings}</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-1 rounded-full bg-purple-500/20 text-purple-300">
-                    {builder.badge}
-                  </span>
                 </div>
-              ))}
             </div>
-          </div>
-
-          {/* Quick monetization */}
-          <div className="rounded-xl border border-white/10 bg-white/6 p-4">
-            <h4 className="text-base font-semibold mb-3">How you earn</h4>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <DollarSign size={12} className="mt-0.5 text-emerald-300 flex-shrink-0" />
-                <div>
-                  <strong>Set your price:</strong>
-                  <span className="text-white/70"> Free, one-time, or subscription—you choose</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 size={12} className="mt-0.5 text-emerald-300 flex-shrink-0" />
-                <div>
-                  <strong>Instant payouts:</strong>
-                  <span className="text-white/70"> Get paid monthly, we handle everything</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <Star size={12} className="mt-0.5 text-yellow-300 flex-shrink-0" />
-                <div>
-                  <strong>Community boost:</strong>
-                  <span className="text-white/70"> Top-rated tools get featured and promoted</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <BadgeCheck size={12} className="mt-0.5 text-blue-300 flex-shrink-0" />
-                <div>
-                  <strong>Revenue share:</strong>
-                  <span className="text-white/70"> You keep 80%, we take 20% for hosting & support</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-
-      <div className="flex items-center gap-3 pt-3 flex-shrink-0">
-        <button className="rounded-lg bg-white/90 text-slate-900 px-5 py-2 text-sm font-semibold hover:bg-white">
-          Start building now
-        </button>
-        <button className="rounded-lg border border-white/20 bg-white/10 px-5 py-2 text-sm hover:bg-white/15">
-          Browse marketplace
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------
-// Workstation Pane (description-first)
-// ---------------------------
-function WorkstationPane() {
-  const toolUseCases = [
-    {
-      tool: "Smart Scraper",
-      useCase: "Extract data from competitor sites into clean spreadsheets",
-      benefit: "No code required"
-    },
-    {
-      tool: "Quick Summarizer",
-      useCase: "Turn 50-page reports into 5-minute briefs",
-      benefit: "Saves hours daily"
-    },
-    {
-      tool: "Brand Writer",
-      useCase: "Generate on-brand copy for social, emails, and ads",
-      benefit: "Always consistent"
-    },
-    {
-      tool: "Sheet Analyzer",
-      useCase: "Ask questions about your data in plain English",
-      benefit: "Instant insights"
-    },
-  ];
-
-  return (
-    <div className="flex-1 flex flex-col h-full min-h-0">
-      <div className="space-y-3 flex-shrink-0">
-        <h3 className="text-2xl md:text-3xl font-bold">
-          One workspace, unlimited tools
-        </h3>
-        <p className="text-base md:text-lg text-white/80 max-w-3xl">
-          Save any tool from the marketplace and access them all in one place. No juggling tabs, no switching apps—just your tools, ready when you need them.
-        </p>
-      </div>
-
-      {/* Tool use cases showcase */}
-      <div className="space-y-3 mt-4 flex-1 flex flex-col min-h-0">
-          <h4 className="text-base font-semibold flex items-center gap-2">
-            <WorkstationIcon size={16} className="text-white/60" />
-            Popular use cases
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {toolUseCases.map((item, i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-white/10 bg-white/6 p-4 hover:bg-white/10 transition-all"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h5 className="text-base font-semibold">{item.tool}</h5>
-                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300 flex-shrink-0">
-                    {item.benefit}
-                  </span>
-                </div>
-                <p className="text-sm text-white/70">{item.useCase}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      {/* Platform benefits */}
-      <div className="rounded-xl border border-white/10 bg-white/6 p-4 mt-4 flex-shrink-0">
-        <h4 className="text-base font-semibold mb-3">Why tools work better here</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-start gap-2">
-            <CheckCircle2 size={12} className="mt-0.5 text-blue-300 flex-shrink-0" />
-            <div>
-              <strong>Chain tools together:</strong>
-              <span className="text-white/70"> Scrape data → Analyze → Generate report, all in one flow</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <CheckCircle2 size={12} className="mt-0.5 text-blue-300 flex-shrink-0" />
-            <div>
-              <strong>Shared context:</strong>
-              <span className="text-white/70"> Your data stays available across all tools</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <CheckCircle2 size={12} className="mt-0.5 text-blue-300 flex-shrink-0" />
-            <div>
-              <strong>Save workflows:</strong>
-              <span className="text-white/70"> Turn multi-step tasks into one-click actions</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <BadgeCheck size={12} className="mt-0.5 text-purple-300 flex-shrink-0" />
-            <div>
-              <strong>Team collaboration:</strong>
-              <span className="text-white/70"> Share tools and outputs with your team (Pro)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 pt-3 flex-shrink-0">
-        <button className="rounded-lg bg-white/90 text-slate-900 px-5 py-2 text-sm font-semibold hover:bg-white flex items-center gap-2">
-          <Play size={14} />
-          Try the workstation
-        </button>
-        <button className="rounded-lg border border-white/20 bg-white/10 px-5 py-2 text-sm hover:bg-white/15">
-          See it in action
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------
-// Plans Pane
-// ---------------------------
-function PlansPane() {
-  const [annual, setAnnual] = useState(true);
-  type Plan = {
-    name: "Free" | "Premium" | "Pro";
-    for: string;
-    bullets: string[];
-    priceMonthly: string;
-    priceAnnual: string;
-    accent: string;
-  };
-  const plans: Plan[] = [
-    {
-      name: "Free",
-      for: "Exploring",
-      bullets: ["Free catalog", "Save tools", "Basic history"],
-      priceMonthly: "$0",
-      priceAnnual: "$0",
-      accent: "from-emerald-300/80 to-teal-300/60",
-    },
-    {
-      name: "Premium",
-      for: "Building",
-      bullets: ["Build tools", "Team sharing", "Adv. history"],
-      priceMonthly: "$12",
-      priceAnnual: "$10",
-      accent: "from-sky-300/80 to-blue-300/60",
-    },
-    {
-      name: "Pro",
-      for: "Monetizing",
-      bullets: ["Publish paid", "Unlimited use", "Analytics"],
-      priceMonthly: "$24",
-      priceAnnual: "$20",
-      accent: "from-amber-300/80 to-orange-300/60",
-    },
-  ];
-
-  return (
-    <div className="flex-1 flex flex-col h-full min-h-0">
-      <div className="flex items-center justify-between flex-shrink-0 mb-2">
-        <div>
-          <h3 className="text-2xl md:text-3xl font-bold">
-            Choose your plan
-          </h3>
-          <p className="text-sm md:text-base text-white/80 mt-1">
-            Try, build, or monetize. Upgrade anytime.
-          </p>
-        </div>
-        {/* Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-white/70">Billing</span>
-          <div className="inline-flex items-center rounded-lg border border-white/15 bg-white/10 p-0.5">
-            <button
-              onClick={() => setAnnual(false)}
-              className={cx(
-                "px-3 py-1.5 text-sm rounded-md",
-                !annual
-                  ? "bg-white/90 text-slate-900 font-semibold"
-                  : "text-white/80"
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setAnnual(true)}
-              className={cx(
-                "px-3 py-1.5 text-sm rounded-md",
-                annual
-                  ? "bg-white/90 text-slate-900 font-semibold"
-                  : "text-white/80"
-              )}
-            >
-              Annual
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 mt-3">
-        {plans.map((p) => (
-          <div
-            key={p.name}
-            className={cx(
-              "relative overflow-hidden rounded-xl border border-white/15 bg-white/6 p-5"
-            )}
-          >
-            <div
-              className={`pointer-events-none absolute -inset-1 opacity-20 blur-2xl bg-gradient-to-br ${p.accent}`}
-            />
-            <div className="relative">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="text-xl font-bold">{p.name}</h4>
-                  <p className="text-sm text-white/70 mt-1">{p.for}</p>
-                </div>
-                <DollarSign size={18} className="text-white/60" />
-              </div>
-              <div className="text-3xl font-extrabold">
-                {annual ? p.priceAnnual : p.priceMonthly}
-                <span className="text-sm font-medium text-white/60 ml-1">
-                  {annual ? "/mo, yearly" : "/mo"}
-                </span>
-              </div>
-              <ul className="mt-4 space-y-2 text-sm">
-                {p.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-1.5">
-                    <CheckCircle2 size={12} className="mt-0.5 text-white/80 flex-shrink-0" />
-                    <span className="text-white/90">{b}</span>
-                  </li>
-                ))}
-              </ul>
-              <button className="mt-5 w-full rounded-lg bg-white/90 text-slate-900 px-4 py-2.5 text-sm font-semibold hover:bg-white transition-all">
-                Choose {p.name}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* FAQ micro-accordion */}
-      <details className="mt-3 rounded-lg border border-white/10 bg-white/6 p-3">
-        <summary className="cursor-pointer text-sm font-semibold">Frequently Asked Questions</summary>
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-white/90">
-          {CONFIG.plans.faqs.map((f) => (
-            <div
-              key={f.q}
-              className="rounded-md border border-white/10 bg-white/6 p-3"
-            >
-              <div className="font-medium text-sm">{f.q}</div>
-              <p className="mt-1 text-white/70 text-sm">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </details>
-    </div>
-  );
-}
-
-// ---------------------------
-// Resources Pane (with in‑card tray)
-// ---------------------------
-function ResourcesPane() {
-  const [tray, setTray] = useState<string | null>(null);
-  const item = CONFIG.resources.find((r) => r.key === tray);
-
-  const resourceSections = [
-    {
-      title: "Learn & Build",
-      items: CONFIG.resources.filter(r => ["docs", "blog"].includes(r.key))
-    },
-    {
-      title: "Company",
-      items: CONFIG.resources.filter(r => ["about", "careers", "changelog"].includes(r.key))
-    },
-    {
-      title: "Support",
-      items: CONFIG.resources.filter(r => ["contact"].includes(r.key))
-    }
-  ];
-
-  return (
-    <div className="flex-1 flex flex-col h-full min-h-0">
-      <div className="space-y-3 flex-shrink-0">
-        <h3 className="text-2xl md:text-3xl font-bold">
-          Everything you need to get started
-        </h3>
-        <p className="text-base md:text-lg text-white/80 max-w-3xl">
-          Documentation, guides, product updates, and support—all in one place.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 flex-1">
-          {resourceSections.map((section) => (
-            <div key={section.title} className="rounded-xl border border-white/10 bg-white/6 p-4">
-              <h4 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-3">
-                {section.title}
-              </h4>
-              <div className="space-y-2">
-                {section.items.map((r) => (
-                  <button
-                    key={r.key}
-                    onClick={() => setTray(r.key)}
-                    className="w-full text-left p-3 rounded-lg hover:bg-white/10 transition-all group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium">{r.title}</span>
-                      <ArrowRight size={14} className="text-white/60 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                    <p className="text-sm text-white/70 mt-1 line-clamp-1">{r.body}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-      {/* Quick stats or social proof */}
-      <div className="flex items-center gap-6 pt-3 text-sm text-white/70 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <BookOpen size={16} />
-          <span>Comprehensive docs</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <CheckCircle2 size={16} />
-          <span>Weekly updates</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Star size={16} />
-          <span>1-day support response</span>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {tray && item && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-10 flex items-stretch"
-          >
-            {/* Dimmer inside the card only */}
-            <div className="absolute inset-0 rounded-2xl bg-black/30" />
-
-            <motion.aside
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 20, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={cx(
-                "ml-auto w-full max-w-[400px] rounded-l-xl border border-white/10 bg-white/10 backdrop-blur-xl p-4 relative"
-              )}
-            >
-              <button
-                onClick={() => setTray(null)}
-                className="absolute right-2 top-2 rounded-lg border border-white/20 bg-white/10 p-1 hover:bg-white/15"
-              >
-                <X size={14} />
-              </button>
-              <h4 className="text-base font-semibold">{item.title}</h4>
-              <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                {item.body}
-              </p>
-              <div className="mt-3 flex items-center gap-2">
-                <button className="rounded-lg bg-white/90 text-slate-900 px-3 py-1 text-xs font-semibold hover:bg-white">
-                  Open full page
-                </button>
-                <button
-                  onClick={() => setTray(null)}
-                  className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-xs hover:bg-white/15"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.aside>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ---------------------------
-// Tiny UI helpers
-// ---------------------------
-function TryButton({ label }: { label: string }) {
-  const [running, setRunning] = useState(false);
-  return (
-    <button
-      onClick={() => {
-        if (running) return;
-        setRunning(true);
-        setTimeout(() => setRunning(false), 900);
-      }}
-      className={cx(
-        "inline-flex items-center gap-2 rounded-lg bg-white/90 text-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-white",
-        running && "opacity-80"
-      )}
-    >
-      <Play size={16} /> {running ? "Running…" : label}
-    </button>
-  );
-}
-
-function IconButton({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      title={title}
-      className="rounded-lg border border-white/20 bg-white/10 p-1.5 hover:bg-white/15"
-    >
-      {children}
-    </button>
-  );
+    );
 }
