@@ -297,18 +297,20 @@ export default function HomePage() {
                         </div>
 
                         {/* Logo and Branding - Lower Right */}
-                        <div className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
-                          <div className="relative w-10 h-10 overflow-hidden rounded-lg">
-                            <Image
-                              src="/arcalab.png"
-                              alt="ARCALAB"
-                              width={40}
-                              height={40}
-                              className="object-cover"
-                            />
+                        {slide.logo && (
+                          <div className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
+                            <div className="relative w-10 h-10 overflow-hidden rounded-lg">
+                              <Image
+                                src={slide.logo}
+                                alt={slide.projectName}
+                                width={40}
+                                height={40}
+                                className="object-contain"
+                              />
+                            </div>
+                            <span className="text-sm font-bold text-white tracking-wide" style={{ fontFamily: brandFont }}>{slide.projectName}</span>
                           </div>
-                          <span className="text-sm font-bold text-white tracking-wide" style={{ fontFamily: brandFont }}>ARCALAB</span>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
