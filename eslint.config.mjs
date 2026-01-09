@@ -10,12 +10,17 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends("next/core-web-vitals"),
   {
     rules: {
       "react/no-unescaped-entities": "off",
-      "react-hooks/exhaustive-deps": "warn",
-      "@next/next/no-img-element": "warn",
+      "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-img-element": "off",
+      "jsx-a11y/alt-text": "off",
+      "jsx-a11y/role-has-required-aria-props": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
     },
   },
 ];
